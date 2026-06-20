@@ -142,7 +142,7 @@ export function AppNavbar() {
         {/* Right side */}
         <div className="flex items-center gap-3">
           <div className="hidden lg:block">
-            <UserButton afterSignOutUrl="/sign-in" />
+            <UserButton />
           </div>
 
           {/* Mobile menu toggle */}
@@ -175,7 +175,7 @@ export function AppNavbar() {
               </Link>
             ))}
             <div className="pt-2 pb-1 px-3">
-              <UserButton afterSignOutUrl="/sign-in" />
+              <UserButton />
             </div>
           </div>
         </div>
