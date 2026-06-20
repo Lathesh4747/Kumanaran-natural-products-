@@ -1,0 +1,129 @@
+import { SignUp } from "@clerk/nextjs";
+import { Leaf } from "lucide-react";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Sign Up" };
+
+const appearance = {
+  variables: {
+    colorPrimary: "#2e7d46",
+    colorBackground: "transparent",
+    colorText: "#16241c",
+    colorTextSecondary: "#56655b",
+    colorInputBackground: "#ffffff",
+    colorInputText: "#16241c",
+    colorDanger: "#dc2626",
+    borderRadius: "8px",
+    fontFamily: "inherit",
+    fontSize: "14px",
+    spacingUnit: "16px",
+  },
+  elements: {
+    rootBox: {
+      width: "100%",
+    },
+    cardBox: {
+      width: "100%",
+      background: "transparent",
+      boxShadow: "none",
+      border: "none",
+    },
+    card: {
+      background: "transparent",
+      boxShadow: "none",
+      border: "none",
+      padding: "0",
+      gap: "20px",
+    },
+    header: {
+      display: "none",
+    },
+    socialButtonsBlockButton: {
+      border: "1px solid #e3e7df",
+      backgroundColor: "#ffffff",
+      color: "#16241c",
+      borderRadius: "8px",
+      fontSize: "14px",
+      fontWeight: "500",
+    },
+    socialButtonsBlockButtonText: {
+      color: "#16241c",
+      fontWeight: "500",
+    },
+    dividerLine: { backgroundColor: "#e3e7df" },
+    dividerText: { color: "#8a988f", fontSize: "12px" },
+    formFieldLabel: {
+      color: "#56655b",
+      fontSize: "13px",
+      fontWeight: "500",
+    },
+    formFieldInput: {
+      border: "1px solid #e3e7df",
+      backgroundColor: "#ffffff",
+      color: "#16241c",
+      borderRadius: "8px",
+      fontSize: "14px",
+      padding: "10px 12px",
+    },
+    formButtonPrimary: {
+      backgroundColor: "#2e7d46",
+      color: "#ffffff",
+      borderRadius: "8px",
+      fontSize: "14px",
+      fontWeight: "500",
+      padding: "10px 16px",
+    },
+    footerActionLink: { color: "#2e7d46", fontWeight: "500" },
+    footerActionText: { color: "#56655b" },
+    footer: {
+      background: "transparent",
+      borderTop: "none",
+    },
+    formFieldInputShowPasswordButton: { color: "#8a988f" },
+    alternativeMethodsBlockButton: {
+      border: "1px solid #e3e7df",
+      backgroundColor: "#ffffff",
+      color: "#16241c",
+      borderRadius: "8px",
+    },
+  },
+};
+
+export default function SignUpPage() {
+  return (
+    <main className="min-h-screen flex items-center justify-center px-4 py-12">
+      <div className="w-full max-w-[400px] flex flex-col gap-6">
+        {/* Brand header */}
+        <div className="flex flex-col items-center gap-3">
+          <div
+            className="w-12 h-12 rounded-[12px] flex items-center justify-center"
+            style={{
+              background: "linear-gradient(45deg, #2e7d46 0%, #1f5c32 100%)",
+            }}
+          >
+            <Leaf className="w-6 h-6 text-white" />
+          </div>
+          <div className="text-center">
+            <p className="text-[18px] font-bold leading-7 text-text-darkest">
+              Kumaran Natural Products
+            </p>
+            <p className="text-sm text-text-muted mt-0.5">Create an account</p>
+          </div>
+        </div>
+
+        {/* Single glass card — Clerk inner card is transparent */}
+        <div className="glass-card px-8 py-8">
+          <SignUp
+            appearance={appearance}
+            signInUrl="/sign-in"
+            fallbackRedirectUrl="/pending-approval"
+          />
+        </div>
+
+        <p className="text-center text-xs text-text-muted">
+          After signing up, an admin must approve your account before you can access the portal.
+        </p>
+      </div>
+    </main>
+  );
+}
