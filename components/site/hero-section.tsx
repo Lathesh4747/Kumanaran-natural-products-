@@ -43,8 +43,11 @@ export function HeroSection() {
   const slide = SLIDES[activeIndex];
 
   return (
-    <section className="relative flex min-h-[100svh] items-center justify-center overflow-hidden">
-      {/* Video background */}
+    <section
+      className="relative flex min-h-[100svh] items-center justify-center overflow-hidden"
+      style={{ backgroundColor: "#0d1a0f" }}
+    >
+      {/* Video background — dark fallback prevents a white flash before it loads */}
       <video
         aria-hidden="true"
         autoPlay
@@ -52,6 +55,7 @@ export function HeroSection() {
         loop
         muted
         playsInline
+        preload="auto"
         src="/hero-video.mp4"
       />
 
@@ -61,7 +65,7 @@ export function HeroSection() {
         className="absolute inset-0"
         style={{
           background:
-            "linear-gradient(135deg, rgba(13,26,15,0.82) 0%, rgba(26,51,33,0.75) 30%, rgba(42,79,52,0.70) 55%, rgba(31,61,40,0.78) 80%, rgba(15,31,19,0.88) 100%)",
+            "linear-gradient(135deg, rgba(13,26,15,0.60) 0%, rgba(26,51,33,0.48) 30%, rgba(42,79,52,0.42) 55%, rgba(31,61,40,0.52) 80%, rgba(15,31,19,0.66) 100%)",
         }}
       />
 
@@ -93,20 +97,21 @@ export function HeroSection() {
       />
 
       {/* Content */}
-      <div className="relative z-10 mx-auto w-full max-w-[1440px] px-6 py-28 sm:px-10 lg:px-16">
-        <div className="mx-auto max-w-3xl text-center">
-          {/* Logo */}
-          <div className="mb-6 flex justify-center">
+      <div className="relative z-10 mx-auto w-full max-w-[1440px] px-6 py-20 sm:px-10 sm:py-24 lg:px-16 lg:py-28">
+        <div className="mx-auto max-w-3xl text-center 2xl:max-w-4xl">
+          {/* Logo — scales with the viewport */}
+          <div className="mb-6 flex justify-center sm:mb-8">
             <Image
               alt="Kumaran Natural Products"
-              height={160}
+              height={168}
+              priority
               src="/Kumaran natural product logo.png"
               style={{
-                width: 160,
-                height: 160,
+                width: "clamp(104px, 13vw, 168px)",
+                height: "auto",
                 filter: "drop-shadow(0 8px 24px rgba(0,0,0,0.4))",
               }}
-              width={160}
+              width={168}
             />
           </div>
 
@@ -124,32 +129,35 @@ export function HeroSection() {
 
           {/* Headline — brand name stays fixed */}
           <h1
-            className="mt-6 font-bold leading-tight tracking-tight text-white"
-            style={{ fontSize: "clamp(36px, 5vw, 72px)", lineHeight: "1.1" }}
+            className="mt-5 font-bold leading-tight tracking-tight text-white sm:mt-6"
+            style={{ fontSize: "clamp(30px, 5.2vw, 80px)", lineHeight: "1.08" }}
           >
             {homeHero.title}
           </h1>
 
           {/* Language slideshow */}
-          <div className="mt-10 flex justify-center sm:mx-auto sm:max-w-2xl">
+          <div className="mt-8 flex justify-center sm:mx-auto sm:max-w-2xl sm:mt-10">
             <div
-              className="w-full rounded-xl px-4 py-4"
+              className="flex w-full flex-col rounded-2xl px-5 py-5 sm:px-6 sm:py-6"
               style={{
-                background: "rgba(255, 255, 255, 0.06)",
-                border: "1px solid rgba(255, 255, 255, 0.10)",
-                minHeight: "80px",
+                background: "rgba(255, 255, 255, 0.08)",
+                border: "1px solid rgba(255, 255, 255, 0.14)",
+                backdropFilter: "blur(8px)",
+                WebkitBackdropFilter: "blur(8px)",
+                minHeight: "clamp(104px, 15vh, 148px)",
               }}
             >
               <div
+                className="flex flex-1 flex-col justify-center"
                 style={{
                   transition: "opacity 0.4s ease, transform 0.4s ease",
                   opacity: visible ? 1 : 0,
                   transform: visible ? "translateY(0)" : "translateY(6px)",
                 }}
               >
-                <div className="mb-2 flex items-center gap-2">
+                <div className="mb-2.5 flex items-center gap-2">
                   <span
-                    className="rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
+                    className="rounded-md px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider sm:text-xs"
                     style={{
                       background: "rgba(46, 125, 70, 0.35)",
                       color: "rgba(180, 230, 195, 0.9)",
@@ -189,8 +197,11 @@ export function HeroSection() {
                   </div>
                 </div>
                 <p
-                  className="text-left text-sm leading-6"
-                  style={{ color: "rgba(255, 255, 255, 0.82)" }}
+                  className="text-left font-medium leading-relaxed"
+                  style={{
+                    color: "rgba(255, 255, 255, 0.92)",
+                    fontSize: "clamp(16px, 1.65vw, 22px)",
+                  }}
                 >
                   {slide.text}
                 </p>
@@ -199,9 +210,9 @@ export function HeroSection() {
           </div>
 
           {/* CTAs */}
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
+          <div className="mt-9 flex flex-col items-stretch justify-center gap-3 sm:mt-10 sm:flex-row sm:items-center sm:gap-4">
             <Link
-              className="rounded-md px-6 py-3 text-sm font-medium transition-opacity hover:opacity-90 active:opacity-80"
+              className="rounded-md px-7 py-3.5 text-sm font-medium transition-opacity hover:opacity-90 active:opacity-80 sm:text-base"
               href="/products"
               style={{
                 background: "var(--color-accent)",
@@ -211,7 +222,7 @@ export function HeroSection() {
               {t.hero.ctaPrimary}
             </Link>
             <Link
-              className="rounded-md px-6 py-3 text-sm font-medium transition-colors"
+              className="rounded-md px-7 py-3.5 text-sm font-medium transition-colors sm:text-base"
               href="/about"
               style={{
                 background: "rgba(255, 255, 255, 0.10)",
