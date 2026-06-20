@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
@@ -15,7 +16,6 @@ import {
   ChevronDown,
   Menu,
   X,
-  Leaf,
   Factory,
   Tag,
   Receipt,
@@ -72,12 +72,13 @@ export function AppNavbar() {
       <div className="mx-auto flex h-16 max-w-[1440px] items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link href="/dashboard" className="flex items-center gap-2.5 flex-shrink-0">
-          <div
-            className="w-9 h-9 rounded-[10px] flex items-center justify-center"
-            style={{ background: "linear-gradient(45deg, #2e7d46 0%, #1f5c32 100%)" }}
-          >
-            <Leaf className="w-5 h-5 text-white" />
-          </div>
+          <Image
+            alt="Kumaran Natural Products logo"
+            height={40}
+            src="/Kumaran natural product logo.png"
+            style={{ width: 40, height: 40, flexShrink: 0 }}
+            width={40}
+          />
           <span
             className="font-bold leading-7 hidden sm:block"
             style={{ fontSize: "19px", color: "var(--color-text-darkest)" }}

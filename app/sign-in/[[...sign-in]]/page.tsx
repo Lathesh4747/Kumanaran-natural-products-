@@ -1,5 +1,5 @@
 import { SignIn } from "@clerk/nextjs";
-import { Leaf } from "lucide-react";
+import Image from "next/image";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Sign In" };
@@ -97,14 +97,13 @@ export default function SignInPage() {
       <div className="w-full max-w-[400px] flex flex-col gap-6">
         {/* Brand header */}
         <div className="flex flex-col items-center gap-3">
-          <div
-            className="w-12 h-12 rounded-[12px] flex items-center justify-center"
-            style={{
-              background: "linear-gradient(45deg, #2e7d46 0%, #1f5c32 100%)",
-            }}
-          >
-            <Leaf className="w-6 h-6 text-white" />
-          </div>
+          <Image
+            alt="Kumaran Natural Products logo"
+            height={56}
+            src="/Kumaran natural product logo.png"
+            style={{ width: 56, height: 56 }}
+            width={56}
+          />
           <div className="text-center">
             <p className="text-[18px] font-bold leading-7 text-text-darkest">
               Kumaran Natural Products

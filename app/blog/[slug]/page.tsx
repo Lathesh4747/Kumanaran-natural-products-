@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { BlogHeader } from "@/components/blog-header";
 import { BlogFooter } from "@/components/blog-footer";
-import { JsonLd } from "@/components/seo/json-ld";
+import { JsonLd, breadcrumbList } from "@/components/seo/json-ld";
 import { getBlogPost, getBlogSlugs, getRelatedPosts } from "@/lib/ghost";
 import { siteConfig } from "@/lib/config";
 
@@ -24,6 +24,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: post.title,
     description: post.excerpt,
+    alternates: { canonical: `/blog/${post.slug}` },
     openGraph: {
       title: post.title,
       description: post.excerpt,
@@ -48,19 +49,34 @@ export default async function BlogPostPage({ params }: Props) {
     headline: post.title,
     description: post.excerpt,
     datePublished: post.publishedAt,
-    image: post.featureImage ?? undefined,
+    dateModified: post.publishedAt,
+    image: post.featureImage ?? `${siteConfig.url}/Kumaran%20natural%20product%20logo.png`,
     articleSection: post.tag,
-    author: { "@type": "Organization", name: siteConfig.name },
-    publisher: { "@type": "Organization", name: siteConfig.name },
+    author: { "@type": "Organization", name: siteConfig.name, url: siteConfig.url },
+    publisher: {
+      "@type": "Organization",
+      name: siteConfig.name,
+      logo: {
+        "@type": "ImageObject",
+        url: `${siteConfig.url}/Kumaran%20natural%20product%20logo.png`,
+      },
+    },
     mainEntityOfPage: {
       "@type": "WebPage",
       "@id": `${siteConfig.url}/blog/${post.slug}`,
     },
   };
 
+  const breadcrumbJsonLd = breadcrumbList([
+    { name: "Home", url: `${siteConfig.url}/` },
+    { name: "Blog", url: `${siteConfig.url}/blog` },
+    { name: post.title, url: `${siteConfig.url}/blog/${post.slug}` },
+  ]);
+
   return (
     <>
       <JsonLd data={articleJsonLd} />
+      <JsonLd data={breadcrumbJsonLd} />
       <BlogHeader />
       <main className="min-h-[calc(100vh-68px)]">
         {/* Article hero */}

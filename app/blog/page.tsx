@@ -8,6 +8,7 @@ export const metadata: Metadata = {
   title: "Blog",
   description:
     "Nutrition guides, farm stories, and business articles from Kumaran Natural Products — a quail farm in Kalmunai, Sri Lanka.",
+  alternates: { canonical: "/blog" },
 };
 
 export const revalidate = 600;

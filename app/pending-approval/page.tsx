@@ -1,6 +1,7 @@
 import { currentUser } from "@clerk/nextjs/server";
+import Image from "next/image";
 import { redirect } from "next/navigation";
-import { Clock, Leaf, LogOut, MessageCircle, XCircle } from "lucide-react";
+import { Clock, LogOut, MessageCircle, XCircle } from "lucide-react";
 import { SignOutButton } from "@clerk/nextjs";
 import type { Metadata } from "next";
 
@@ -42,12 +43,13 @@ export default async function PendingApprovalPage() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex flex-col items-center gap-3 mb-8">
-          <div
-            className="w-12 h-12 rounded-[12px] flex items-center justify-center"
-            style={{ background: "linear-gradient(45deg, #2e7d46 0%, #1f5c32 100%)" }}
-          >
-            <Leaf className="w-6 h-6 text-white" />
-          </div>
+          <Image
+            alt="Kumaran Natural Products logo"
+            height={56}
+            src="/Kumaran natural product logo.png"
+            style={{ width: 56, height: 56 }}
+            width={56}
+          />
           <p className="text-[19px] font-bold leading-7 text-text-darkest">
             Kumaran Natural Products
           </p>

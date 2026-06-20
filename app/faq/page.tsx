@@ -8,6 +8,7 @@ export const metadata: Metadata = {
   title: "FAQ",
   description:
     "Answers to common questions about Kumaran Natural Products — quail eggs, quail meat, ordering on WhatsApp, freshness, storage, and where to buy across Sri Lanka.",
+  alternates: { canonical: "/faq" },
 };
 
 const faqs: { question: string; answer: string }[] = [

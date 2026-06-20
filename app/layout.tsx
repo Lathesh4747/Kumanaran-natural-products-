@@ -2,7 +2,11 @@ import type { Metadata } from "next";
 import { Inter, Noto_Sans_Sinhala, Noto_Sans_Tamil } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { LocaleProvider } from "@/lib/locale-context";
+import { siteConfig } from "@/lib/config";
 import "./globals.css";
+
+const DESCRIPTION =
+  "Farm-fresh quail eggs and quail meat from Kalmunai, Sri Lanka. Available at Cargills Food City, Keells, and private supermarkets.";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -26,9 +30,21 @@ export const metadata: Metadata = {
     default: "Kumaran Natural Products",
     template: "%s | Kumaran Natural Products",
   },
-  description:
-    "Farm-fresh quail eggs and quail meat from Kalmunai, Sri Lanka. Available at Cargills Food City, Keells, and private supermarkets.",
-  metadataBase: new URL("https://kumarannaturalproducts.com"),
+  description: DESCRIPTION,
+  metadataBase: new URL(siteConfig.url),
+  openGraph: {
+    type: "website",
+    siteName: siteConfig.name,
+    title: "Kumaran Natural Products",
+    description: DESCRIPTION,
+    url: siteConfig.url,
+    locale: "en_LK",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Kumaran Natural Products",
+    description: DESCRIPTION,
+  },
 };
 
 export default function RootLayout({

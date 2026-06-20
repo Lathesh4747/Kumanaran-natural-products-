@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { ProductsGrid } from "@/components/site/products-grid";
-import { JsonLd } from "@/components/seo/json-ld";
+import { JsonLd, breadcrumbList } from "@/components/seo/json-ld";
 import { getPublicProducts } from "@/db/queries/products";
 import { siteConfig } from "@/lib/config";
 import { CURRENCY } from "@/lib/utils";
@@ -11,6 +11,7 @@ export const metadata: Metadata = {
   title: `Products | ${siteConfig.name}`,
   description:
     "Farm-fresh quail eggs and quail meat packed in 500g and 1000g packets, available at Cargills, Keells, and supermarkets across Sri Lanka. Buy via WhatsApp.",
+  alternates: { canonical: "/products" },
   openGraph: {
     title: `Products | ${siteConfig.name}`,
     description:
@@ -19,6 +20,8 @@ export const metadata: Metadata = {
     siteName: siteConfig.name,
   },
 };
+
+const productImage = `${siteConfig.url}/Kumaran%20natural%20product%20logo.png`;
 
 export default async function ProductsPage() {
   const activeProducts = (await getPublicProducts()).filter((p) => p.isActive);
@@ -35,20 +38,29 @@ export default async function ProductsPage() {
         name: p.name.en,
         description: p.description.en || undefined,
         category: p.type,
+        sku: p.id,
+        image: productImage,
         brand: { "@type": "Brand", name: siteConfig.name },
         offers: {
           "@type": "Offer",
           price: p.mrp,
           priceCurrency: CURRENCY,
           availability: "https://schema.org/InStock",
+          url: `${siteConfig.url}/products`,
         },
       },
     })),
   };
 
+  const breadcrumbJsonLd = breadcrumbList([
+    { name: "Home", url: `${siteConfig.url}/` },
+    { name: "Products", url: `${siteConfig.url}/products` },
+  ]);
+
   return (
     <>
       <JsonLd data={itemListJsonLd} />
+      <JsonLd data={breadcrumbJsonLd} />
       <SiteHeader />
       <main>
         {/* Page hero */}

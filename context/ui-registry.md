@@ -25,7 +25,7 @@ After building any component — update this file with the component name, file 
 - Container: `glass-nav sticky top-0 z-50`
 - Inner: `mx-auto flex h-16 max-w-[1440px] items-center justify-between px-6 sm:px-10 lg:px-16`
 - Logo text: `text-[19px] font-bold leading-7` · color `--color-text-darkest`
-- Logo icon: 36×36px, `linear-gradient(45deg, #2e7d46 0%, #1f5c32 100%)` bg, `rounded-[10px]`, white leaf SVG
+- Logo icon: 52×52px `next/image` of `/Kumaran natural product logo.png` (company peacock logo). The same PNG is the brand mark everywhere — site header/footer, hero, blog header, app navbar (40px), sign-in/sign-up + pending-approval (56px) — and the app favicon via `app/icon.png` / `app/apple-icon.png` / `app/opengraph-image.png` (file-based metadata icons). The old green gradient + Leaf tile is retired.
 - Nav links: `rounded-md px-3 py-2 text-sm font-medium` · color `--color-text-dark` → hover `--color-accent`
 - Language switcher: pill, `rounded-full border`, active locale `bg-accent text-accent-foreground`, inactive `text-text-dark`
 - Login button: `rounded-md px-4 py-2 text-sm font-medium` · `bg-accent text-accent-foreground`

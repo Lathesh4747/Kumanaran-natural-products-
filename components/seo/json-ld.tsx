@@ -12,3 +12,20 @@ export function JsonLd({ data }: { data: JsonLdData }) {
     />
   );
 }
+
+// Builds a schema.org BreadcrumbList so search/answer engines understand the
+// page's position in the site. Pass ordered { name, url } crumbs.
+export function breadcrumbList(
+  items: readonly { name: string; url: string }[]
+): JsonLdData {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: item.name,
+      item: item.url,
+    })),
+  };
+}

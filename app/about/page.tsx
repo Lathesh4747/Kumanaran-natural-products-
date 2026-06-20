@@ -7,6 +7,7 @@ export const metadata: Metadata = {
   title: "About Us",
   description:
     "Learn about Kumaran Natural Products — a quail farm in Kalmunai, Sri Lanka, producing fresh quail eggs and quail meat for supermarkets across the island.",
+  alternates: { canonical: "/about" },
   openGraph: {
     title: "About Us | Kumaran Natural Products",
     description:

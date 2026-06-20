@@ -7,6 +7,7 @@ export const metadata: Metadata = {
   title: "Contact Us",
   description:
     "Get in touch with Kumaran Natural Products. Chat on WhatsApp, visit us in Kalmunai, or send a message. We respond promptly to all enquiries.",
+  alternates: { canonical: "/contact" },
 };
 
 export default function ContactPage() {
