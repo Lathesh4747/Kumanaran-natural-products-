@@ -13,6 +13,12 @@ const isPublicRoute = createRouteMatcher([
   '/pending-approval(.*)',
   '/api/contact(.*)',
   '/api/cron(.*)',
+  // SEO/crawler files must be reachable without auth, or Googlebot gets
+  // redirected to sign-in and can't read them (.xml/.txt aren't extension-excluded
+  // by the matcher below, so they run through Clerk).
+  '/sitemap.xml',
+  '/robots.txt',
+  '/opengraph-image(.*)',
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
