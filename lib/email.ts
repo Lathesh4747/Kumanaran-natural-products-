@@ -1,7 +1,6 @@
 import { Resend } from "resend";
 import { formatCurrency, formatDate, SUPPLY_REMINDER_DAYS } from "@/lib/utils";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 const WHATSAPP_NUMBER = "94705920748";
 
@@ -14,6 +13,13 @@ function isResendConfigured(): boolean {
     !!process.env.RESEND_API_KEY &&
     process.env.RESEND_API_KEY !== "re_your_resend_api_key_here"
   );
+}
+
+// Construct the client lazily — never at module load. `new Resend()` throws
+// when the key is missing, which would crash the build while Next collects
+// page data for routes that import this module.
+function getResend(): Resend {
+  return new Resend(process.env.RESEND_API_KEY);
 }
 
 // ─── Shared email layout ──────────────────────────────────────────────────────
@@ -164,7 +170,7 @@ export async function sendApprovalEmail({
     return;
   }
 
-  const { error } = await resend.emails.send({
+  const { error } = await getResend().emails.send({
     from: FROM,
     to: toEmail,
     subject: "✓ Your account has been approved — Kumaran Natural Products",
@@ -189,7 +195,7 @@ export async function sendRejectionEmail({
     return;
   }
 
-  const { error } = await resend.emails.send({
+  const { error } = await getResend().emails.send({
     from: FROM,
     to: toEmail,
     subject: "Your access request — Kumaran Natural Products",
@@ -278,7 +284,7 @@ export async function sendSupplyReminderEmail({
     return;
   }
 
-  const { error } = await resend.emails.send({
+  const { error } = await getResend().emails.send({
     from: FROM,
     to: toEmail,
     subject: `🔔 Follow up: ${info.supermarketName} — ${info.branchName} (supplied ${SUPPLY_REMINDER_DAYS} days ago)`,
