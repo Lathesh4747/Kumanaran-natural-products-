@@ -174,7 +174,15 @@ After building any component — update this file with the component name, file 
 
 #### JsonLd (SEO structured data)
 `components/seo/json-ld.tsx` — Server Component
-- Renders `<script type="application/ld+json">` from a `JsonLdData` object. Used for Organization (home), ItemList/Product (`/products`), Article (`/blog/[slug]`), FAQPage (`/faq`). No visual output.
+- Renders `<script type="application/ld+json">` from a `JsonLdData` object. No visual output. `breadcrumbList()` (standalone, with `@context`) is kept for any direct use, but pages now emit one connected `@graph` per page via the central `lib/seo.ts` helpers.
+
+#### SEO layer (`lib/seo.ts`) — no visual output
+Single source of truth for all SEO / SEM / AEO / GEO. Server-only schema builders + the `pageMeta()` metadata helper, consumed by every public page so titles, canonicals, Open Graph (with `si_LK`/`ta_LK` alternate locales), Twitter cards, robots directives, and JSON-LD never drift.
+- **`pageMeta({ title, description, path, keywords?, type?, images?, noindex?, publishedTime?, modifiedTime? })`** → full `Metadata` (canonical + OG + Twitter + googleBot max-preview directives). Used on `/`, `/about`, `/contact`, `/products`, `/blog`, `/blog/[slug]`, `/faq`, `/price` (noindex).
+- **Node builders:** `organizationNode()`, `websiteNode()` (with SearchAction sitelinks box), `localBusinessNode()` (geo/areaServed), `webPageNode()`, `breadcrumbNode()`. **`graph(nodes[])`** wraps them in one `@graph` with shared `@id` refs.
+- The global Organization + WebSite graph is emitted once in `app/layout.tsx` (`<body>`); per-page graphs reference those `@id`s.
+- Constants exported: `BUSINESS` (Kalmunai geo/telephone/WhatsApp), `BRAND_KEYWORDS`, `OG_LOCALE`/`OG_LOCALE_ALTERNATES`, `LOGO_URL`, `OG_IMAGE_URL`, `absolute()`.
+- Companions: `app/manifest.ts` (PWA web manifest at `/manifest.webmanifest`), `app/robots.ts` (explicit GPTBot/ClaudeBot/PerplexityBot/Google-Extended rules), `app/sitemap.ts` (lastModified + image entries).
 
 #### FaqPage
 `app/faq/page.tsx` — Server Component (replaced the `RouteShell` placeholder)

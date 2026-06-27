@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
 import { RouteShell } from "@/components/route-shell";
+import { pageMeta } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Price | Kumaran Natural Products",
+// Placeholder page with no real content yet — keep it out of the index.
+export const metadata: Metadata = pageMeta({
+  title: "Product Prices",
   description:
     "Current Kumaran Natural Products prices for quail eggs and quail meat in Sri Lanka.",
-  // Placeholder page with no real content yet — keep it out of the index.
-  robots: { index: false, follow: true },
-};
+  path: "/price",
+  noindex: true,
+});
 
 export default function PricePage() {
   return (

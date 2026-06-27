@@ -2,65 +2,84 @@ import type { Metadata } from "next";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { ProductsGrid } from "@/components/site/products-grid";
-import { JsonLd, breadcrumbList } from "@/components/seo/json-ld";
+import { JsonLd } from "@/components/seo/json-ld";
 import { getPublicProducts } from "@/db/queries/products";
 import { siteConfig } from "@/lib/config";
 import { CURRENCY } from "@/lib/utils";
+import {
+  graph,
+  webPageNode,
+  breadcrumbNode,
+  pageMeta,
+  absolute,
+  OG_IMAGE_URL,
+} from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: `Products | ${siteConfig.name}`,
-  description:
-    "Farm-fresh quail eggs and quail meat packed in 500g and 1000g packets, available at Cargills, Keells, and supermarkets across Sri Lanka. Buy via WhatsApp.",
-  alternates: { canonical: "/products" },
-  openGraph: {
-    title: `Products | ${siteConfig.name}`,
-    description:
-      "Farm-fresh quail eggs and quail meat packed in 500g and 1000g packets, available at supermarkets across Sri Lanka.",
-    url: `${siteConfig.url}/products`,
-    siteName: siteConfig.name,
-  },
-};
+const DESCRIPTION =
+  "Farm-fresh quail eggs and quail meat packed in 500g and 1000g packets, available at Cargills Food City, Keells, and supermarkets across Sri Lanka. Buy via WhatsApp.";
 
-const productImage = `${siteConfig.url}/Kumaran%20natural%20product%20logo.png`;
+export const metadata: Metadata = pageMeta({
+  title: "Products — Quail Eggs & Quail Meat (500g / 1kg)",
+  description: DESCRIPTION,
+  path: "/products",
+  keywords: [
+    "buy quail eggs Sri Lanka",
+    "quail meat 500g price",
+    "quail meat 1000g",
+    "quail eggs Cargills Keells",
+    "fresh quail products supermarket",
+  ],
+});
 
 export default async function ProductsPage() {
   const activeProducts = (await getPublicProducts()).filter((p) => p.isActive);
 
-  const itemListJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "ItemList",
-    name: `Products | ${siteConfig.name}`,
-    itemListElement: activeProducts.map((p, i) => ({
-      "@type": "ListItem",
-      position: i + 1,
-      item: {
-        "@type": "Product",
-        name: p.name.en,
-        description: p.description.en || undefined,
-        category: p.type,
-        sku: p.id,
-        image: productImage,
-        brand: { "@type": "Brand", name: siteConfig.name },
-        offers: {
-          "@type": "Offer",
-          price: p.mrp,
-          priceCurrency: CURRENCY,
-          availability: "https://schema.org/InStock",
-          url: `${siteConfig.url}/products`,
+  const productsGraph = graph([
+    webPageNode({
+      path: "/products",
+      name: `Products | ${siteConfig.name}`,
+      description: DESCRIPTION,
+      type: "CollectionPage",
+    }),
+    {
+      "@type": "ItemList",
+      name: `Products | ${siteConfig.name}`,
+      numberOfItems: activeProducts.length,
+      itemListElement: activeProducts.map((p, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        item: {
+          "@type": "Product",
+          "@id": `${absolute("/products")}#product-${p.id}`,
+          name: p.name.en,
+          description: p.description.en || undefined,
+          category: p.type,
+          sku: p.id,
+          image: OG_IMAGE_URL,
+          brand: { "@type": "Brand", name: siteConfig.name },
+          manufacturer: { "@id": `${siteConfig.url}/#organization` },
+          offers: {
+            "@type": "Offer",
+            price: p.mrp,
+            priceCurrency: CURRENCY,
+            itemCondition: "https://schema.org/NewCondition",
+            availability: "https://schema.org/InStock",
+            url: absolute("/products"),
+            seller: { "@id": `${siteConfig.url}/#organization` },
+            areaServed: { "@type": "Country", name: "Sri Lanka" },
+          },
         },
-      },
-    })),
-  };
-
-  const breadcrumbJsonLd = breadcrumbList([
-    { name: "Home", url: `${siteConfig.url}/` },
-    { name: "Products", url: `${siteConfig.url}/products` },
+      })),
+    },
+    breadcrumbNode([
+      { name: "Home", path: "/" },
+      { name: "Products", path: "/products" },
+    ]),
   ]);
 
   return (
     <>
-      <JsonLd data={itemListJsonLd} />
-      <JsonLd data={breadcrumbJsonLd} />
+      <JsonLd data={productsGraph} />
       <SiteHeader />
       <main>
         {/* Page hero */}

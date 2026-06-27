@@ -7,54 +7,31 @@ import { BlogPreviewSection } from "@/components/site/blog-preview-section";
 import { LocationSection } from "@/components/site/location-section";
 import { ContactSection } from "@/components/site/contact-section";
 import { JsonLd } from "@/components/seo/json-ld";
-import { siteConfig } from "@/lib/config";
-import { WHATSAPP_NUMBER } from "@/lib/utils";
+import { graph, localBusinessNode, webPageNode, pageMeta } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  alternates: { canonical: "/" },
-};
+export const metadata: Metadata = pageMeta({
+  title: "Fresh Quail Eggs & Quail Meat in Sri Lanka",
+  description:
+    "Kumaran Natural Products — farm-fresh quail eggs and quail meat from Kalmunai, Sri Lanka, supplied to Cargills Food City, Keells, and private supermarkets. Order on WhatsApp.",
+  path: "/",
+});
 
-const logoUrl = `${siteConfig.url}/Kumaran%20natural%20product%20logo.png`;
-
-// LocalBusiness models the physical farm/supplier for local + answer engines;
-// it carries the geo, service area, and opening hours Organization can't.
-const localBusinessJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "LocalBusiness",
-  "@id": `${siteConfig.url}/#business`,
-  name: siteConfig.name,
-  legalName: siteConfig.legalName,
-  url: siteConfig.url,
-  description: siteConfig.description,
-  logo: logoUrl,
-  image: logoUrl,
-  priceRange: "$$",
-  telephone: `+${WHATSAPP_NUMBER}`,
-  currenciesAccepted: "LKR",
-  address: {
-    "@type": "PostalAddress",
-    addressLocality: "Kalmunai",
-    addressRegion: "Eastern Province",
-    addressCountry: "LK",
-  },
-  geo: {
-    "@type": "GeoCoordinates",
-    latitude: 7.4095,
-    longitude: 81.8344,
-  },
-  areaServed: { "@type": "Country", name: "Sri Lanka" },
-  contactPoint: {
-    "@type": "ContactPoint",
-    contactType: "sales",
-    telephone: `+${WHATSAPP_NUMBER}`,
-    availableLanguage: ["en", "si", "ta"],
-  },
-};
+// Home emits a connected graph: the physical business (geo / service area)
+// linked to the global WebSite + Organization entities defined in the layout.
+const homeGraph = graph([
+  localBusinessNode(),
+  webPageNode({
+    path: "/",
+    name: "Kumaran Natural Products — Fresh Quail Eggs & Quail Meat",
+    description:
+      "Farm-fresh quail eggs and quail meat from Kalmunai, Sri Lanka, available at Cargills Food City, Keells, and private supermarkets.",
+  }),
+]);
 
 export default function Home() {
   return (
     <>
-      <JsonLd data={localBusinessJsonLd} />
+      <JsonLd data={homeGraph} />
       <SiteHeader />
       <main>
         <HeroSection />

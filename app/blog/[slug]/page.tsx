@@ -3,9 +3,10 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { BlogHeader } from "@/components/blog-header";
 import { BlogFooter } from "@/components/blog-footer";
-import { JsonLd, breadcrumbList } from "@/components/seo/json-ld";
+import { JsonLd } from "@/components/seo/json-ld";
 import { getBlogPost, getBlogSlugs, getRelatedPosts } from "@/lib/ghost";
 import { siteConfig } from "@/lib/config";
+import { graph, breadcrumbNode, pageMeta, absolute, LOGO_URL } from "@/lib/seo";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -21,19 +22,21 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const post = await getBlogPost(slug);
   if (!post) return {};
-  return {
+  return pageMeta({
     title: post.title,
     description: post.excerpt,
-    alternates: { canonical: `/blog/${post.slug}` },
-    openGraph: {
-      title: post.title,
-      description: post.excerpt,
-      type: "article",
-      url: `${siteConfig.url}/blog/${post.slug}`,
-      publishedTime: post.publishedAt,
-      images: post.featureImage ? [post.featureImage] : undefined,
-    },
-  };
+    path: `/blog/${post.slug}`,
+    type: "article",
+    publishedTime: post.publishedAt,
+    modifiedTime: post.publishedAt,
+    images: post.featureImage ? [post.featureImage] : undefined,
+    keywords: [post.tag, "quail eggs Sri Lanka", "Kumaran Natural Products"],
+  });
+}
+
+function wordCount(html: string | null, excerpt: string): number {
+  const text = html ? html.replace(/<[^>]+>/g, " ") : excerpt;
+  return text.split(/\s+/).filter(Boolean).length;
 }
 
 export default async function BlogPostPage({ params }: Props) {
@@ -43,40 +46,37 @@ export default async function BlogPostPage({ params }: Props) {
 
   const related = await getRelatedPosts(slug);
 
-  const articleJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Article",
-    headline: post.title,
-    description: post.excerpt,
-    datePublished: post.publishedAt,
-    dateModified: post.publishedAt,
-    image: post.featureImage ?? `${siteConfig.url}/Kumaran%20natural%20product%20logo.png`,
-    articleSection: post.tag,
-    author: { "@type": "Organization", name: siteConfig.name, url: siteConfig.url },
-    publisher: {
-      "@type": "Organization",
-      name: siteConfig.name,
-      logo: {
-        "@type": "ImageObject",
-        url: `${siteConfig.url}/Kumaran%20natural%20product%20logo.png`,
+  const articleGraph = graph([
+    {
+      "@type": "Article",
+      "@id": `${absolute(`/blog/${post.slug}`)}#article`,
+      headline: post.title,
+      description: post.excerpt,
+      datePublished: post.publishedAt,
+      dateModified: post.publishedAt,
+      image: post.featureImage ?? LOGO_URL,
+      articleSection: post.tag,
+      keywords: [post.tag, "quail eggs", "quail meat", "Sri Lanka"],
+      inLanguage: "en-LK",
+      wordCount: wordCount(post.html, post.excerpt),
+      author: { "@id": `${siteConfig.url}/#organization` },
+      publisher: { "@id": `${siteConfig.url}/#organization` },
+      isPartOf: { "@id": `${siteConfig.url}/blog#blog` },
+      mainEntityOfPage: {
+        "@type": "WebPage",
+        "@id": absolute(`/blog/${post.slug}`),
       },
     },
-    mainEntityOfPage: {
-      "@type": "WebPage",
-      "@id": `${siteConfig.url}/blog/${post.slug}`,
-    },
-  };
-
-  const breadcrumbJsonLd = breadcrumbList([
-    { name: "Home", url: `${siteConfig.url}/` },
-    { name: "Blog", url: `${siteConfig.url}/blog` },
-    { name: post.title, url: `${siteConfig.url}/blog/${post.slug}` },
+    breadcrumbNode([
+      { name: "Home", path: "/" },
+      { name: "Blog", path: "/blog" },
+      { name: post.title, path: `/blog/${post.slug}` },
+    ]),
   ]);
 
   return (
     <>
-      <JsonLd data={articleJsonLd} />
-      <JsonLd data={breadcrumbJsonLd} />
+      <JsonLd data={articleGraph} />
       <BlogHeader />
       <main className="min-h-[calc(100vh-68px)]">
         {/* Article hero */}

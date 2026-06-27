@@ -3,21 +3,60 @@ import Link from "next/link";
 import { BlogHeader } from "@/components/blog-header";
 import { BlogFooter } from "@/components/blog-footer";
 import { getBlogPosts } from "@/lib/ghost";
+import { JsonLd } from "@/components/seo/json-ld";
+import { graph, breadcrumbNode, pageMeta, absolute } from "@/lib/seo";
+import { siteConfig } from "@/lib/config";
 
-export const metadata: Metadata = {
-  title: "Blog",
-  description:
-    "Nutrition guides, farm stories, and business articles from Kumaran Natural Products — a quail farm in Kalmunai, Sri Lanka.",
-  alternates: { canonical: "/blog" },
-};
+const DESCRIPTION =
+  "Nutrition guides, farm stories, and business articles from Kumaran Natural Products — a quail farm in Kalmunai, Sri Lanka. Learn about quail egg nutrition, storage, and cooking.";
+
+export const metadata: Metadata = pageMeta({
+  title: "Blog — Quail Nutrition, Farm Stories & Guides",
+  description: DESCRIPTION,
+  path: "/blog",
+  keywords: [
+    "quail egg nutrition",
+    "quail egg benefits",
+    "how to cook quail meat",
+    "quail farming Sri Lanka blog",
+  ],
+});
 
 export const revalidate = 600;
 
 export default async function BlogPage() {
   const blogPosts = await getBlogPosts();
 
+  const blogGraph = graph([
+    {
+      "@type": "Blog",
+      "@id": `${siteConfig.url}/blog#blog`,
+      url: absolute("/blog"),
+      name: `Blog | ${siteConfig.name}`,
+      description: DESCRIPTION,
+      inLanguage: "en-LK",
+      isPartOf: { "@id": `${siteConfig.url}/#website` },
+      publisher: { "@id": `${siteConfig.url}/#organization` },
+      blogPost: blogPosts.map((post) => ({
+        "@type": "BlogPosting",
+        headline: post.title,
+        description: post.excerpt,
+        url: absolute(`/blog/${post.slug}`),
+        datePublished: post.publishedAt,
+        articleSection: post.tag,
+        image: post.featureImage ?? undefined,
+        author: { "@id": `${siteConfig.url}/#organization` },
+      })),
+    },
+    breadcrumbNode([
+      { name: "Home", path: "/" },
+      { name: "Blog", path: "/blog" },
+    ]),
+  ]);
+
   return (
     <>
+      <JsonLd data={blogGraph} />
       <BlogHeader />
       <main className="min-h-[calc(100vh-68px)]">
         {/* Hero */}

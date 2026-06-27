@@ -53,9 +53,20 @@ export function BlogFooter() {
               Contact
             </Link>
           </div>
-          <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
-            Kalmunai, Eastern Province, Sri Lanka
-          </p>
+          <div className="flex flex-col items-center gap-1 sm:items-end">
+            <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+              Built by{" "}
+              <a
+                className="font-medium transition-colors hover:text-accent"
+                href="https://www.alienx-engineering.com/"
+                rel="noopener noreferrer"
+                style={{ color: "var(--color-text-secondary)" }}
+                target="_blank"
+              >
+                AlienX Engineering
+              </a>
+            </p>
+          </div>
         </div>
       </div>
     </footer>

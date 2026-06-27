@@ -3,13 +3,22 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { JsonLd } from "@/components/seo/json-ld";
 import { siteConfig } from "@/lib/config";
+import { graph, webPageNode, breadcrumbNode, pageMeta, absolute } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "FAQ",
-  description:
-    "Answers to common questions about Kumaran Natural Products — quail eggs, quail meat, ordering on WhatsApp, freshness, storage, and where to buy across Sri Lanka.",
-  alternates: { canonical: "/faq" },
-};
+const DESCRIPTION =
+  "Answers to common questions about Kumaran Natural Products — quail eggs, quail meat, ordering on WhatsApp, freshness, storage, and where to buy across Sri Lanka.";
+
+export const metadata: Metadata = pageMeta({
+  title: "FAQ — Quail Eggs & Quail Meat Questions Answered",
+  description: DESCRIPTION,
+  path: "/faq",
+  keywords: [
+    "where to buy quail eggs Sri Lanka",
+    "how to store quail eggs",
+    "quail egg benefits",
+    "quail meat freshness",
+  ],
+});
 
 const faqs: { question: string; answer: string }[] = [
   {
@@ -50,20 +59,34 @@ const faqs: { question: string; answer: string }[] = [
 ];
 
 export default function FaqPage() {
-  const faqJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    name: `FAQ | ${siteConfig.name}`,
-    mainEntity: faqs.map((f) => ({
-      "@type": "Question",
-      name: f.question,
-      acceptedAnswer: { "@type": "Answer", text: f.answer },
-    })),
-  };
+  const faqGraph = graph([
+    {
+      "@type": "FAQPage",
+      "@id": `${absolute("/faq")}#faq`,
+      name: `FAQ | ${siteConfig.name}`,
+      url: absolute("/faq"),
+      inLanguage: "en-LK",
+      isPartOf: { "@id": `${siteConfig.url}/#website` },
+      mainEntity: faqs.map((f) => ({
+        "@type": "Question",
+        name: f.question,
+        acceptedAnswer: { "@type": "Answer", text: f.answer },
+      })),
+    },
+    webPageNode({
+      path: "/faq",
+      name: `FAQ | ${siteConfig.name}`,
+      description: DESCRIPTION,
+    }),
+    breadcrumbNode([
+      { name: "Home", path: "/" },
+      { name: "FAQ", path: "/faq" },
+    ]),
+  ]);
 
   return (
     <>
-      <JsonLd data={faqJsonLd} />
+      <JsonLd data={faqGraph} />
       <SiteHeader />
       <main>
         {/* Hero */}
