@@ -5,8 +5,14 @@ import { db } from "@/db";
 import { productTypes, products, costPrices } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
+import { pingIndexNow } from "@/lib/indexnow";
 
 type ActionResult = { success: boolean; error?: string };
+
+// Public pages that reflect the catalogue. There are no per-product detail
+// routes, so a product change is surfaced on the products listing and the home
+// page (which shows a products preview). Pushed to IndexNow on every save.
+const PUBLIC_PRODUCT_URLS = ["/products", "/"] as const;
 
 // ── Product Types ─────────────────────────────────────────────────────────────
 
@@ -95,6 +101,8 @@ export async function createProduct(
       mrp: String(parsed.data.mrp),
     });
     revalidatePath("/products-admin");
+    revalidatePath("/products");
+    await pingIndexNow(PUBLIC_PRODUCT_URLS);
     return { success: true };
   } catch (error) {
     console.error("[actions/products] createProduct", error);
@@ -119,6 +127,8 @@ export async function updateProduct(
     if (!parsed.success) return { success: false, error: parsed.error.issues[0].message };
     await db.update(products).set({ ...parsed.data, mrp: String(parsed.data.mrp) }).where(eq(products.id, id));
     revalidatePath("/products-admin");
+    revalidatePath("/products");
+    await pingIndexNow(PUBLIC_PRODUCT_URLS);
     return { success: true };
   } catch (error) {
     console.error("[actions/products] updateProduct", error);
@@ -130,6 +140,8 @@ export async function toggleProductActive(id: number, isActive: boolean): Promis
   try {
     await db.update(products).set({ isActive }).where(eq(products.id, id));
     revalidatePath("/products-admin");
+    revalidatePath("/products");
+    await pingIndexNow(PUBLIC_PRODUCT_URLS);
     return { success: true };
   } catch (error) {
     console.error("[actions/products] toggleProductActive", error);

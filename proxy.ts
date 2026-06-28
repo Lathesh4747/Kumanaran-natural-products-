@@ -19,6 +19,10 @@ const isPublicRoute = createRouteMatcher([
   '/sitemap.xml',
   '/robots.txt',
   '/opengraph-image(.*)',
+  // IndexNow key-verification files live at the site root as <key>.txt and must
+  // be reachable without auth so search engines can verify ownership. (.txt is
+  // not extension-excluded by the matcher below, so it runs through Clerk.)
+  '/(.*).txt',
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
