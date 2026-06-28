@@ -3,9 +3,12 @@ import { beforeSupply, products } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { clerkClient } from "@clerk/nextjs/server";
 import { getSessionUser } from "@/lib/auth";
-import { resolvePeriod, getDashboardData } from "@/db/queries/dashboard";
+import { resolvePeriod, getDashboardData, getAlerts } from "@/db/queries/dashboard";
 import { PeriodSelector } from "@/components/dashboard/period-selector";
-import { formatCurrency } from "@/lib/utils";
+import { ReturnAnalytics } from "@/components/dashboard/return-analytics";
+import { AlertsCard } from "@/components/dashboard/alerts-card";
+import { UserManagement } from "@/components/admin/user-management";
+import { formatCurrency, LOW_STOCK_THRESHOLD, HIGH_RETURN_RATE_THRESHOLD } from "@/lib/utils";
 import { Package, TrendingUp, RotateCcw, Clock, FileDown, Trophy, MapPin, Store } from "lucide-react";
 import type { Metadata } from "next";
 
@@ -59,7 +62,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: SP
     })
     .from(beforeSupply)
     .leftJoin(products, eq(beforeSupply.productId, products.id))
-    .where(sql`${beforeSupply.quantityRemaining} > 0 and ${beforeSupply.quantityRemaining} <= 20`)
+    .where(sql`${beforeSupply.quantityRemaining} > 0 and ${beforeSupply.quantityRemaining} <= ${LOW_STOCK_THRESHOLD}`)
     .orderBy(beforeSupply.quantityRemaining)
     .limit(5)
     .catch(() => []);
@@ -72,7 +75,15 @@ export default async function DashboardPage({ searchParams }: { searchParams: SP
     topProductsByProfit: [],
     topDistricts: [],
     topSupermarkets: [],
+    returnAnalytics: { returnRate: 0, totalReturns: 0, returnsLoss: 0, mostReturned: [], byReason: [], byWeight: [] },
   };
+
+  const alerts = data
+    ? await getAlerts(d, lowStock.length, { isAdmin, userId: session?.id ?? "" }).catch((e) => {
+        console.error("[dashboard] getAlerts", e);
+        return [];
+      })
+    : [];
 
   const userNames = isAdmin ? await resolveUserNames(d.perUser.map((u) => u.userId)) : new Map();
 
@@ -292,24 +303,50 @@ export default async function DashboardPage({ searchParams }: { searchParams: SP
         </div>
       </div>
 
-      {/* Low stock alert */}
-      {lowStock.length > 0 && (
-        <div className="glass-card p-0 overflow-hidden">
-          <div className="px-5 py-4 border-b border-border flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-warning animate-pulse" />
-            <h2 className="text-sm font-semibold text-text-primary">Low Stock</h2>
-          </div>
-          <div className="divide-y divide-border">
-            {lowStock.map((b) => (
-              <div key={b.id} className="flex items-center justify-between px-5 py-3">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-text-primary truncate">{b.productName}</p>
-                  <p className="text-xs text-text-muted">Batch {b.batchNumber}</p>
+      {/* Return analytics */}
+      <div className="flex items-center gap-2 pt-2">
+        <RotateCcw className="w-4 h-4 text-warning" />
+        <h2 className="text-base font-semibold text-text-primary">Returns & Alerts</h2>
+      </div>
+      <ReturnAnalytics data={d.returnAnalytics} rateAlert={d.returnAnalytics.returnRate > HIGH_RETURN_RATE_THRESHOLD} />
+
+      {/* Alerts + low stock detail */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <AlertsCard alerts={alerts} />
+
+        {lowStock.length > 0 ? (
+          <div className="glass-card p-0 overflow-hidden">
+            <div className="px-5 py-4 border-b border-border flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-warning animate-pulse" />
+              <h2 className="text-sm font-semibold text-text-primary">Low Stock Batches</h2>
+            </div>
+            <div className="divide-y divide-border">
+              {lowStock.map((b) => (
+                <div key={b.id} className="flex items-center justify-between px-5 py-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-text-primary truncate">{b.productName}</p>
+                    <p className="text-xs text-text-muted">Batch {b.batchNumber}</p>
+                  </div>
+                  <span className="flex-shrink-0 rounded-full bg-warning-light text-warning text-xs font-medium px-2.5 py-0.5 ml-3">{b.quantityRemaining} left</span>
                 </div>
-                <span className="flex-shrink-0 rounded-full bg-warning-light text-warning text-xs font-medium px-2.5 py-0.5 ml-3">{b.quantityRemaining} left</span>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
+        ) : (
+          <div className="glass-card p-0 overflow-hidden">
+            <div className="px-5 py-4 border-b border-border flex items-center gap-2">
+              <Package className="w-4 h-4 text-accent" />
+              <h2 className="text-sm font-semibold text-text-primary">Low Stock Batches</h2>
+            </div>
+            <p className="px-5 py-8 text-center text-sm text-text-muted">All batches are well stocked.</p>
+          </div>
+        )}
+      </div>
+
+      {/* Admin-only user management */}
+      {isAdmin && (
+        <div className="flex flex-col gap-4 pt-2">
+          <UserManagement />
         </div>
       )}
     </div>

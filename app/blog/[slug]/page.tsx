@@ -30,7 +30,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     publishedTime: post.publishedAt,
     modifiedTime: post.publishedAt,
     images: post.featureImage ? [post.featureImage] : undefined,
-    keywords: [post.tag, "quail eggs Sri Lanka", "Kumaran Natural Products"],
+    keywords: post.keywords ?? [
+      post.tag,
+      "quail eggs Sri Lanka",
+      "Kumaran Natural Products",
+    ],
   });
 }
 
@@ -45,6 +49,7 @@ export default async function BlogPostPage({ params }: Props) {
   if (!post) notFound();
 
   const related = await getRelatedPosts(slug);
+  const faqs = post.faqs ?? [];
 
   const articleGraph = graph([
     {
@@ -56,7 +61,7 @@ export default async function BlogPostPage({ params }: Props) {
       dateModified: post.publishedAt,
       image: post.featureImage ?? LOGO_URL,
       articleSection: post.tag,
-      keywords: [post.tag, "quail eggs", "quail meat", "Sri Lanka"],
+      keywords: post.keywords ?? [post.tag, "quail eggs", "quail meat", "Sri Lanka"],
       inLanguage: "en-LK",
       wordCount: wordCount(post.html, post.excerpt),
       author: { "@id": `${siteConfig.url}/#organization` },
@@ -67,6 +72,22 @@ export default async function BlogPostPage({ params }: Props) {
         "@id": absolute(`/blog/${post.slug}`),
       },
     },
+    // FAQPage node — lets answer/generative engines extract clean Q&A pairs.
+    ...(faqs.length > 0
+      ? [
+          {
+            "@type": "FAQPage",
+            "@id": `${absolute(`/blog/${post.slug}`)}#faq`,
+            inLanguage: "en-LK",
+            isPartOf: { "@id": absolute(`/blog/${post.slug}`) },
+            mainEntity: faqs.map((f) => ({
+              "@type": "Question",
+              name: f.question,
+              acceptedAnswer: { "@type": "Answer", text: f.answer },
+            })),
+          },
+        ]
+      : []),
     breadcrumbNode([
       { name: "Home", path: "/" },
       { name: "Blog", path: "/blog" },
@@ -170,6 +191,48 @@ export default async function BlogPostPage({ params }: Props) {
                       ))}
                     </div>
                   ))}
+                </div>
+              )}
+
+              {/* FAQ block — visible Q&A backed by FAQPage structured data */}
+              {faqs.length > 0 && (
+                <div className="mt-10 max-w-prose border-t pt-8"
+                  style={{ borderColor: "var(--color-border-light)" }}
+                >
+                  <h2
+                    className="text-lg font-semibold leading-7"
+                    style={{ color: "var(--color-text-primary)" }}
+                  >
+                    Frequently asked questions
+                  </h2>
+                  <div className="mt-5 flex flex-col gap-4">
+                    {faqs.map((faq) => (
+                      <details
+                        className="glass-card-tint group p-5"
+                        key={faq.question}
+                      >
+                        <summary
+                          className="flex cursor-pointer list-none items-center justify-between gap-4 text-sm font-semibold leading-6 marker:hidden"
+                          style={{ color: "var(--color-text-primary)" }}
+                        >
+                          {faq.question}
+                          <span
+                            aria-hidden
+                            className="shrink-0 text-lg transition-transform group-open:rotate-45"
+                            style={{ color: "var(--color-accent)" }}
+                          >
+                            +
+                          </span>
+                        </summary>
+                        <p
+                          className="mt-3 text-sm leading-7"
+                          style={{ color: "var(--color-text-secondary)" }}
+                        >
+                          {faq.answer}
+                        </p>
+                      </details>
+                    ))}
+                  </div>
                 </div>
               )}
             </article>

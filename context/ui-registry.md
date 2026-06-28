@@ -164,6 +164,28 @@ After building any component — update this file with the component name, file 
 
 ---
 
+#### ReturnAnalytics (Feature 17)
+`components/dashboard/return-analytics.tsx` — Server Component (presentational, takes `data: DashboardData["returnAnalytics"]` + `rateAlert: boolean`)
+- 3-card grid `grid-cols-1 lg:grid-cols-3 gap-6`
+- Summary card: `glass-card p-6`; return rate `text-2xl font-semibold` (turns `text-error` when `rateAlert`); packets returned + returns loss (`text-error`) KV rows; "By reason" breakdown using reason-tone pill badges (Expired/Damaged = `bg-error-light text-error`, Quality Issue/Near Expiry = `bg-warning-light text-warning`, Unsold = `bg-surface-secondary text-text-secondary`)
+- Most-returned card: ranked product list with `Bar` (track `bg-border-light`, fill `bg-error`)
+- Weight-split card: per-`weight_unit` rows with % of total + `Bar` (fill `bg-harvest` for 500g else `bg-accent`)
+- Empty state per card: `text-text-muted` when `totalReturns === 0`
+
+#### AlertsCard (Feature 17)
+`components/dashboard/alerts-card.tsx` — Server Component (takes `alerts: Alert[]` from `getAlerts`)
+- `glass-card p-0 overflow-hidden`; header with pulsing `bg-warning` dot + count pill when non-empty
+- Each alert: `w-9 h-9 rounded-xl` tone icon tile + title/detail; tone map error/warning/info → `bg-*-light` + `text-*` (icons: AlertTriangle / PackageX / Clock / CalendarClock)
+- Empty state: centered `CheckCircle2 text-success` + "All clear" message
+
+#### UserManagement (admin)
+`components/admin/user-management.tsx` — Server Component (Clerk `getUserList`); used on `/admin/users` and embedded below the dashboard (admin-only)
+- Header row: `Users` icon + title + pending-count pill (`bg-warning-light text-warning`) + `<RegisterUser />`
+- Table: `glass-card p-0`; columns User / Joined (hidden on mobile) / Status / Action; status pill Approved (`bg-success-lightest text-success-foreground`) / Pending (`bg-warning-light text-warning`)
+- Empty state: `Users` icon + "No staff users yet"
+- `components/admin/user-actions.tsx` — `"use client"`: Approve (`bg-success-lightest`) / Revoke (`bg-warning-light text-warning`) via `/api/admin/approve`, **Remove** (`bg-error-light text-error`) via `DELETE /api/admin/users`, gated by `confirmDelete()`, errors via `alertError()`; spinner per busy action
+- `components/admin/register-user.tsx` — `"use client"`: collapsed "Register user" primary button → inline `glass-card-tint` form (first/last/email/temp-password) → `POST /api/admin/users`; success via `alertSuccess()`, shared `inputCls`/`labelCls` master-data field styles
+
 #### Alert / Confirm dialogs (SweetAlert2)
 `lib/alerts.ts` — `"use client"` · the only `sweetalert2` caller
 - `confirmDelete(text?, confirmLabel?)` → `Promise<boolean>`; warning icon, red destructive confirm + glass cancel, `reverseButtons`, `focusCancel`. Replaces native `window.confirm` for all delete buttons across the ops app.
@@ -194,7 +216,8 @@ Single source of truth for all SEO / SEM / AEO / GEO. Server-only schema builder
 #### Blog post body (Ghost or static)
 `app/blog/[slug]/page.tsx`
 - Renders Ghost `post.html` inside `<div className="ghost-content max-w-prose">` (dangerouslySetInnerHTML) when present, else maps static `post.sections`
-- Emits Article JSON-LD; `generateMetadata` adds Open Graph article tags
+- Emits Article JSON-LD; `generateMetadata` adds Open Graph article tags (per-post `keywords` from `lib/blog-data.ts` when set)
+- **Post FAQ block (AEO/GEO):** when a static post defines `faqs[]`, renders a "Frequently asked questions" section below the body — `<details className="glass-card-tint group p-5">` accordion (same `+` → rotate-45 toggle pattern as `app/faq/page.tsx`) — and adds a `FAQPage` node (`#faq`) to the article `@graph`. `BlogPost.faqs` / `BlogPost.keywords` are optional fields flowed through `lib/ghost.ts` `BlogPostFull`; Ghost posts leave them null.
 
 ## CSS Utility Classes (globals.css)
 

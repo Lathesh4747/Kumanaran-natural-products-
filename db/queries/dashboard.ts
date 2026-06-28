@@ -10,8 +10,14 @@ import {
   feedPurchases,
   payments,
 } from "@/db/schema";
-import { and, gte, lte, eq, desc } from "drizzle-orm";
-import { TOP_SUPERMARKETS_LIMIT } from "@/lib/utils";
+import { and, gte, lte, eq, desc, isNull } from "drizzle-orm";
+import {
+  TOP_SUPERMARKETS_LIMIT,
+  HIGH_RETURN_RATE_THRESHOLD,
+  LOW_STOCK_THRESHOLD,
+  SUPPLY_REMINDER_DAYS,
+  formatCurrency,
+} from "@/lib/utils";
 
 export type PeriodType = "week" | "month" | "year" | "custom";
 export type Period = { type: PeriodType; from: string; to: string; label: string };
@@ -80,6 +86,14 @@ export type DashboardData = {
   topProductsByProfit: { productId: number; name: string; profit: number }[];
   topDistricts: { district: string; value: number }[];
   topSupermarkets: { supermarketId: number; name: string; branch: string; value: number }[];
+  returnAnalytics: {
+    returnRate: number;
+    totalReturns: number;
+    returnsLoss: number;
+    mostReturned: { productId: number; name: string; qty: number }[];
+    byReason: { reason: string; qty: number }[];
+    byWeight: { weightUnit: string; qty: number }[];
+  };
 };
 
 const n = (v: string | null): number => (v == null ? 0 : parseFloat(v) || 0);
@@ -113,11 +127,15 @@ export async function getDashboardData(period: Period, scope: Scope): Promise<Da
   const returnRows = await db
     .select({
       productId: returns.productId,
+      productName: products.name,
       qty: returns.returnQuantity,
+      reason: returns.returnReason,
+      weightUnit: returns.weightUnit,
       ownerId: supplies.userId,
     })
     .from(returns)
     .innerJoin(supplies, eq(returns.supplyId, supplies.id))
+    .leftJoin(products, eq(returns.productId, products.id))
     .where(and(gte(returns.returnDate, period.from), lte(returns.returnDate, period.to), ownSupply));
 
   // Latest cost price per product for returns-loss valuation
@@ -204,11 +222,21 @@ export async function getDashboardData(period: Period, scope: Scope): Promise<Da
 
   let returnsLoss = 0;
   let returnsQty = 0;
+  const returnsByProduct = new Map<number, { name: string; qty: number }>();
+  const returnsByReason = new Map<string, number>();
+  const returnsByWeight = new Map<string, number>();
   for (const r of returnRows) {
     const loss = r.qty * (costByProduct.get(r.productId) ?? 0);
     returnsLoss += loss;
     returnsQty += r.qty;
     getUser(r.ownerId).returnsLoss += loss;
+
+    const rp = returnsByProduct.get(r.productId) ?? { name: r.productName ?? "—", qty: 0 };
+    rp.qty += r.qty;
+    returnsByProduct.set(r.productId, rp);
+
+    returnsByReason.set(r.reason, (returnsByReason.get(r.reason) ?? 0) + r.qty);
+    returnsByWeight.set(r.weightUnit, (returnsByWeight.get(r.weightUnit) ?? 0) + r.qty);
   }
 
   let expensesTotal = 0;
@@ -248,6 +276,19 @@ export async function getDashboardData(period: Period, scope: Scope): Promise<Da
 
   const perUser = [...userAgg.values()].sort((a, b) => b.netProfit - a.netProfit);
 
+  const mostReturned = [...returnsByProduct.entries()]
+    .map(([productId, v]) => ({ productId, name: v.name, qty: v.qty }))
+    .sort((a, b) => b.qty - a.qty)
+    .slice(0, 5);
+
+  const byReason = [...returnsByReason.entries()]
+    .map(([reason, qty]) => ({ reason, qty }))
+    .sort((a, b) => b.qty - a.qty);
+
+  const byWeight = [...returnsByWeight.entries()]
+    .map(([weightUnit, qty]) => ({ weightUnit, qty }))
+    .sort((a, b) => b.qty - a.qty);
+
   return {
     stats: {
       packets,
@@ -267,5 +308,96 @@ export async function getDashboardData(period: Period, scope: Scope): Promise<Da
     topProductsByProfit,
     topDistricts,
     topSupermarkets,
+    returnAnalytics: {
+      returnRate: packets > 0 ? (returnsQty / packets) * 100 : 0,
+      totalReturns: returnsQty,
+      returnsLoss,
+      mostReturned,
+      byReason,
+      byWeight,
+    },
   };
+}
+
+export type Alert = {
+  kind: "high-return" | "low-stock" | "overdue-payment" | "follow-up";
+  tone: "error" | "warning" | "info";
+  title: string;
+  detail: string;
+};
+
+/**
+ * Dashboard alerts that fire only when a threshold is crossed. Reuses already-
+ * computed dashboard figures plus two light scoped queries (overdue payments,
+ * upcoming supply follow-ups). Returns an empty array when nothing needs attention.
+ */
+export async function getAlerts(
+  data: DashboardData,
+  lowStockCount: number,
+  scope: Scope,
+): Promise<Alert[]> {
+  const alerts: Alert[] = [];
+
+  if (data.returnAnalytics.returnRate > HIGH_RETURN_RATE_THRESHOLD) {
+    alerts.push({
+      kind: "high-return",
+      tone: "error",
+      title: "High return rate",
+      detail: `${data.returnAnalytics.returnRate.toFixed(1)}% of supplied packets came back (threshold ${HIGH_RETURN_RATE_THRESHOLD}%).`,
+    });
+  }
+
+  if (lowStockCount > 0) {
+    alerts.push({
+      kind: "low-stock",
+      tone: "warning",
+      title: "Low stock",
+      detail: `${lowStockCount} batch${lowStockCount === 1 ? "" : "es"} at or below ${LOW_STOCK_THRESHOLD} packets remaining.`,
+    });
+  }
+
+  const ownPayment = scope.isAdmin ? undefined : eq(payments.userId, scope.userId);
+  const overdueRows = await db
+    .select({ amount: payments.amount })
+    .from(payments)
+    .where(and(eq(payments.status, "pending"), ownPayment));
+  if (overdueRows.length > 0) {
+    const total = overdueRows.reduce((acc, p) => acc + n(p.amount), 0);
+    alerts.push({
+      kind: "overdue-payment",
+      tone: "warning",
+      title: "Pending payments",
+      detail: `${overdueRows.length} payment${overdueRows.length === 1 ? "" : "s"} still unpaid (${formatCurrency(total)}).`,
+    });
+  }
+
+  // Supplies whose follow-up date (supply_date + SUPPLY_REMINDER_DAYS) lands within
+  // the next 3 days and that haven't been reminded yet — a visit/contact is due.
+  const todayD = new Date();
+  const windowStart = new Date(todayD);
+  windowStart.setDate(todayD.getDate() - SUPPLY_REMINDER_DAYS);
+  const windowEnd = new Date(todayD);
+  windowEnd.setDate(todayD.getDate() - SUPPLY_REMINDER_DAYS + 3);
+  const ownSupplyAlert = scope.isAdmin ? undefined : eq(supplies.userId, scope.userId);
+  const followUpRows = await db
+    .select({ id: supplies.id })
+    .from(supplies)
+    .where(
+      and(
+        gte(supplies.supplyDate, iso(windowStart)),
+        lte(supplies.supplyDate, iso(windowEnd)),
+        isNull(supplies.reminderSentAt),
+        ownSupplyAlert,
+      ),
+    );
+  if (followUpRows.length > 0) {
+    alerts.push({
+      kind: "follow-up",
+      tone: "info",
+      title: "Supply follow-ups due",
+      detail: `${followUpRows.length} suppl${followUpRows.length === 1 ? "y" : "ies"} reaching the ${SUPPLY_REMINDER_DAYS}-day mark — visit or call to check on returns/stock.`,
+    });
+  }
+
+  return alerts;
 }

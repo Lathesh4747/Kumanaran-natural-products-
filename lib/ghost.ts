@@ -2,6 +2,7 @@ import "server-only";
 import {
   blogPosts as staticPosts,
   type BlogSection,
+  type BlogFaq,
 } from "@/lib/blog-data";
 
 // Single place that talks to the Ghost Content API. When Ghost is not configured
@@ -22,6 +23,9 @@ export type BlogPostFull = BlogPostSummary & {
   // Ghost posts arrive as rendered HTML; static posts as structured sections.
   html: string | null;
   sections: BlogSection[] | null;
+  // AEO / GEO extras from static posts; Ghost posts leave these null/empty.
+  faqs: BlogFaq[] | null;
+  keywords: string[] | null;
 };
 
 const GHOST_URL = process.env.GHOST_URL;
@@ -112,13 +116,21 @@ export async function getBlogPost(slug: string): Promise<BlogPostFull | null> {
       featureImage: null,
       html: null,
       sections: post.sections,
+      faqs: post.faqs ?? null,
+      keywords: post.keywords ?? null,
     };
   }
   try {
     const data = await ghostFetch(`/slug/${encodeURIComponent(slug)}/?include=tags`);
     const post = (data as { posts?: GhostPost[] }).posts?.[0];
     if (!post) return null;
-    return { ...toSummary(post), html: post.html ?? null, sections: null };
+    return {
+      ...toSummary(post),
+      html: post.html ?? null,
+      sections: null,
+      faqs: null,
+      keywords: null,
+    };
   } catch (error) {
     console.error("[lib/ghost] getBlogPost", error);
     return null;
